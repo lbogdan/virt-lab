@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_NAME="mkimage.sh"
 SRC_IMAGE="focal-server-cloudimg-amd64.img"
-DST_IMAGE="focal-server-k8s-cloudimg-amd64.img"
+DST_IMAGE="focal-server-k8s-1.22-cloudimg-amd64.img"
 NBD_DEV="/dev/nbd0"
 MNT_PATH="/mnt/image"
 KUBERNETES_VERSION="1.22.5"
@@ -89,13 +89,13 @@ _prepare_common () {
   apt purge -y snapd udisks2 multipath-tools policykit-1 open-vm-tools
   apt autoremove -y
   apt upgrade -y
-  apt install -y qemu-guest-agent
+  apt install -y qemu-guest-agent ipset ipvsadm jq
 }
 
 _prepare_crio () {
   if ! apt-key list 2>/dev/null | grep devel:kubic >/dev/null; then
     echo "* configuring cri-o repo key"
-    curl -fsSL "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$CRIO_OS/Release.key" | apt-key add -
+    curl -fsSL "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$CRIO_OS/Release.key" | apt-key add - >/dev/null
   else
     echo "~ cri-o repo key already configured"
   fi
@@ -173,10 +173,10 @@ else
     echo "ERROR: inside the image chroot, run \"mkimage.sh prepare\""
     exit 1
   else
-    # _duplicate_image
-    # _mount_image
-    # _image_prepare
-    # _unmount_image
+    _duplicate_image
+    _mount_image
+    _image_prepare
+    _unmount_image
     _compress_image
   fi
 fi
